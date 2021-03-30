@@ -148,12 +148,12 @@ def crossSol(model):
     sol_list=copy.deepcopy(model.sol_list)
     model.sol_list=[]
     while True:
-        if random.random()<=model.pc:
-            f1_index = random.randint(0, len(sol_list) - 1)
-            f2_index = random.randint(0, len(sol_list) - 1)
-            if f1_index!=f2_index:
-                f1 = copy.deepcopy(sol_list[f1_index])
-                f2 = copy.deepcopy(sol_list[f2_index])
+        f1_index = random.randint(0, len(sol_list) - 1)
+        f2_index = random.randint(0, len(sol_list) - 1)
+        if f1_index!=f2_index:
+            f1 = copy.deepcopy(sol_list[f1_index])
+            f2 = copy.deepcopy(sol_list[f2_index])
+            if random.random() <= model.pc:
                 cro1_index=int(random.randint(0,model.number_of_nodes-1))
                 cro2_index=int(random.randint(cro1_index,model.number_of_nodes-1))
                 new_c1_f = []
@@ -186,25 +186,30 @@ def crossSol(model):
                 f2.nodes_seq=new_c2
                 model.sol_list.append(copy.deepcopy(f1))
                 model.sol_list.append(copy.deepcopy(f2))
-                if len(model.sol_list)>model.popsize:
-                    break
+            else:
+                model.sol_list.append(copy.deepcopy(f1))
+                model.sol_list.append(copy.deepcopy(f2))
+            if len(model.sol_list)>model.popsize:
+                break
     #mutation
 def muSol(model):
     sol_list=copy.deepcopy(model.sol_list)
     model.sol_list=[]
     while True:
-        if random.random()<=model.pm:
-            f1_index = int(random.randint(0, len(sol_list) - 1))
-            f1 = copy.deepcopy(sol_list[f1_index])
-            m1_index=random.randint(0,model.number_of_nodes-1)
-            m2_index=random.randint(0,model.number_of_nodes-1)
-            if m1_index!=m2_index:
+        f1_index = int(random.randint(0, len(sol_list) - 1))
+        f1 = copy.deepcopy(sol_list[f1_index])
+        m1_index=random.randint(0,model.number_of_nodes-1)
+        m2_index=random.randint(0,model.number_of_nodes-1)
+        if m1_index!=m2_index:
+            if random.random() <= model.pm:
                 node1=f1.nodes_seq[m1_index]
                 f1.nodes_seq[m1_index]=f1.nodes_seq[m2_index]
                 f1.nodes_seq[m2_index]=node1
                 model.sol_list.append(copy.deepcopy(f1))
-                if len(model.sol_list)>model.popsize:
-                    break
+            else:
+                model.sol_list.append(copy.deepcopy(f1))
+            if len(model.sol_list)>model.popsize:
+                break
 def plotObj(obj_list):
     plt.rcParams['font.sans-serif'] = ['SimHei'] #show chinese
     plt.rcParams['axes.unicode_minus'] = False  # Show minus sign
@@ -268,4 +273,4 @@ def run(filepath,epochs,pc,pm,popsize,n_select,v_cap,opt_type):
     outPut(model)
 if __name__=='__main__':
     file='../data/cvrp.xlsx'
-    run(filepath=file,epochs=150,pc=0.6,pm=0.2,popsize=100,n_select=80,v_cap=80,opt_type=1)
+    run(filepath=file,epochs=350,pc=0.6,pm=0.2,popsize=100,n_select=80,v_cap=80,opt_type=1)
