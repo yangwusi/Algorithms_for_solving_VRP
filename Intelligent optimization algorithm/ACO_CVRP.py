@@ -195,7 +195,7 @@ def run(filepath,Q,alpha,beta,rho,epochs,v_cap,opt_type,popsize):
     :param beta:Expected heuristic factor
     :param rho:Information volatilization factor
     :param epochs:Iterations
-    :param v_cap:Vehicle capacity
+    :param v_cap: Vehicle capacity
     :param opt_type:Optimization type:0:Minimize the number of vehicles,1:Minimize travel distance
     :param popsize:Population size
     :return:
