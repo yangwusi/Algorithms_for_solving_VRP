@@ -301,7 +301,7 @@ def run(demand_file,depot_file,epochs,pc,pm,popsize,n_select,v_cap,opt_type):
     :param popsize:Population size
     :param n_select:Number of excellent individuals selected
     :param v_cap:Vehicle capacity
-    :param opt_type:Optimization type:0:Minimize the number of vehicles,1:Minimize travel distance
+    :param opt_type: Optimization type:0:Minimize the number of vehicles,1:Minimize travel distance
     :return:
     """
     model=Model()

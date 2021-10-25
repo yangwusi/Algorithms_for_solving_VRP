@@ -164,7 +164,7 @@ def run(filepath,T0,Tf,detaT,v_cap,opt_type):
     :param Tf: Termination temperature
     :param deltaT: Step or proportion of temperature drop
     :param v_cap:  Vehicle capacity
-    :param opt_type: Optimization type:0:Minimize the number of vehicles,1:Minimize travel distance
+    :param opt_type: Optimization type:0:Minimize the cost of travel distance;1:Minimize the cost of travel time
     :return:
     """
     model=Model()
