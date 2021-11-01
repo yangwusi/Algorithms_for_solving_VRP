@@ -140,9 +140,12 @@ def calTravelCost(route_list,model):
                 arrival=max(timetable[-1][1]+travel_time,current_node.start_time)
                 departure=arrival+current_node.service_time
                 timetable.append((arrival,departure))
-                cost_of_distance = cost_of_distance + model.distance_matrix[last_node_id,current_node_id]
-                cost_of_time += model.time_matrix[last_node_id,current_node_id] + current_node.service_time\
-                                +max(current_node.start_time-timetable[-1][1]+travel_time,0)
+                if i==1:
+                    cost_of_time += current_node.service_time + max(current_node.start_time - timetable[-1][1] + travel_time, 0)
+                if i>1:
+                    cost_of_distance += model.distance_matrix[last_node_id, current_node_id]
+                    cost_of_time += model.time_matrix[last_node_id, current_node_id] + current_node.service_time \
+                                    + max(current_node.start_time - timetable[-1][1] + travel_time, 0)
             else:
                 last_node_id = route[i - 1]
                 depot_id=route[i]
