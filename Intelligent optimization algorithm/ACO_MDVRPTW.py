@@ -143,7 +143,7 @@ def calTravelCost(route_list,model):
                 timetable.append((arrival,departure))
                 cost_of_distance += model.distance_matrix[last_node_id, current_node_id]
                 cost_of_time += model.time_matrix[last_node_id, current_node_id]+ current_node.service_time\
-                                + max(current_node.start_time - timetable[-1][1] + travel_time, 0)
+                                + max(current_node.start_time - timetable[-1][1] - travel_time, 0)
             else:
                 last_node_id = route[i - 1]
                 depot_id=route[i]
@@ -188,21 +188,20 @@ def splitRoutes(node_id_list,model):
             demand = demand + model.demand_dict[n_2].demand
             if n_1 == n_2:
                 arrival= max(model.demand_dict[n_2].start_time,model.depot_dict[depot].start_time+model.time_matrix[depot,n_2])
-                departure=arrival+model.demand_dict[n_2].service_time+model.time_matrix[n_2,depot]
+                departure=arrival+model.demand_dict[n_2].service_time
                 if model.opt_type == 0:
                     cost=model.distance_matrix[depot,n_2]*2
                 else:
                     cost=model.time_matrix[depot,n_2]*2
             else:
                 n_3=node_id_list[j-1]
-                arrival= max(departure-model.time_matrix[n_3,depot]+model.time_matrix[n_3,n_2],model.demand_dict[n_2].start_time)
-                departure=arrival+model.demand_dict[n_2].service_time+model.time_matrix[n_2,depot]
+                arrival= max(departure+model.time_matrix[n_3,n_2],model.demand_dict[n_2].start_time)
+                departure=arrival+model.demand_dict[n_2].service_time
                 if model.opt_type == 0:
                     cost=cost-model.distance_matrix[n_3,depot]+model.distance_matrix[n_3,n_2]+model.distance_matrix[n_2,depot]
                 else:
                     cost=cost-model.time_matrix[n_3,depot]+model.time_matrix[n_3,n_2]\
-                         +model.demand_dict[n_2].start_time-departure-model.time_matrix[n_3,depot]+model.time_matrix[n_3,n_2]\
-                         +model.time_matrix[n_2,depot]
+                         +max(model.demand_dict[n_2].start_time-arrival,0)+model.time_matrix[n_2,depot]
             if demand<=model.vehicle_cap and departure-model.time_matrix[n_2,depot] <= model.demand_dict[n_2].end_time:
                 if departure <= model.depot_dict[depot].end_time:
                     n_4=node_id_list[i-1] if i-1>=0 else depot
