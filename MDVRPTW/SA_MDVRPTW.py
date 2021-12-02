@@ -192,8 +192,8 @@ def splitRoutes(node_id_list,model):
                 else:
                     cost=cost-model.time_matrix[n_3,depot]+model.time_matrix[n_3,n_2]\
                          +max(model.demand_dict[n_2].start_time-arrival,0)+model.time_matrix[n_2,depot]
-            if demand<=model.vehicle_cap and departure-model.time_matrix[n_2,depot] <= model.demand_dict[n_2].end_time:
-                if departure <= model.depot_dict[depot].end_time:
+            if demand<=model.vehicle_cap and departure<= model.demand_dict[n_2].end_time:
+                if departure+model.time_matrix[n_2,depot] <= model.depot_dict[depot].end_time:
                     n_4=node_id_list[i-1] if i-1>=0 else depot
                     if V[n_4]+cost <= V[n_2]:
                         V[n_2]=V[n_4]+cost
