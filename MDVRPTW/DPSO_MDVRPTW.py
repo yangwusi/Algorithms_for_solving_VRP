@@ -346,7 +346,7 @@ def run(demand_file,depot_file,epochs,popsize,Vmax,v_cap,v_speed,opt_type,w,c1,c
     :param popsize: Population size
     :param v_cap: Vehicle capacity
     :param v_speed: Vehicle speed
-    :param Vmax : Max speed
+    :param Vmax : Maximum moving speed of particles
     :param opt_type: Optimization type:0:Minimize the cost of travel distance;1:Minimize the cost of travel time
     :param w: Inertia weight
     :param c1: Learning factor
