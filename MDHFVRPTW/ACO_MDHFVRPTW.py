@@ -1,17 +1,17 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/12/21 8:54
-# @Author  : Praise
-# @File    : DPSO_MDHFVRPTW.py
-# obj:
+# -*- coding:utf-8 -*-
+# @FileName  :ACO_MDHFVRPTW.py
+# @Time      :2021/12/26 15:23
+# @Author    :Praise
 
-import math
+
 import random
 import numpy as np
-import copy
 import xlsxwriter
 import matplotlib.pyplot as plt
 import csv
 import time
+from math import sqrt
+from copy import deepcopy
 
 class Sol():
     def __init__(self):
@@ -49,22 +49,21 @@ class Vehicle():
 class Model():
     def __init__(self):
         self.best_sol=None
+        self.sol_list=[]
         self.demand_dict={}
         self.vehicle_dict={}
         self.vehicle_type_list=[]
         self.demand_id_list=[]
-        self.sol_list=[]
         self.distance_matrix={}
         self.number_of_demands=0
-        self.popsize=100
         self.opt_type=1 # 0: cost of travel distance; 1: cost of travel time
-        self.pl=[]
-        self.pg=None
-        self.v=[]
-        self.Vmax=5
-        self.w=0.8
-        self.c1=2
-        self.c2=2
+        self.alpha = 2
+        self.beta = 3
+        self.Q = 100
+        self.tau0 = 10
+        self.rho = 0.5
+        self.tau = {}
+        self.popsize=100
 
 def readCSVFile(demand_file,depot_file,model):
     with open(demand_file,'r') as f:
@@ -100,17 +99,20 @@ def readCSVFile(demand_file,depot_file,model):
             model.vehicle_dict[vehicle.type] = vehicle
             model.vehicle_type_list.append(vehicle.type)
 
+
 def calDistanceMatrix(model):
     for i in range(len(model.demand_id_list)):
         from_node_id = model.demand_id_list[i]
         for j in range(i + 1, len(model.demand_id_list)):
             to_node_id = model.demand_id_list[j]
-            dist = math.sqrt((model.demand_dict[from_node_id].x_coord - model.demand_dict[to_node_id].x_coord) ** 2
+            dist = sqrt((model.demand_dict[from_node_id].x_coord - model.demand_dict[to_node_id].x_coord) ** 2
                              + (model.demand_dict[from_node_id].y_coord - model.demand_dict[to_node_id].y_coord) ** 2)
             model.distance_matrix[from_node_id, to_node_id] = dist
             model.distance_matrix[to_node_id, from_node_id] = dist
+            model.tau[from_node_id, to_node_id] = model.tau0
+            model.tau[to_node_id, from_node_id] = model.tau0
         for _, vehicle in model.vehicle_dict.items():
-            dist = math.sqrt((model.demand_dict[from_node_id].x_coord - vehicle.x_coord) ** 2
+            dist = sqrt((model.demand_dict[from_node_id].x_coord - vehicle.x_coord) ** 2
                              + (model.demand_dict[from_node_id].y_coord - vehicle.y_coord) ** 2)
             model.distance_matrix[from_node_id, vehicle.type] = dist
             model.distance_matrix[vehicle.type, from_node_id] = dist
@@ -261,7 +263,7 @@ def splitRoutes(node_id_list,model):
                 route=node_id_list[i:j+1]
                 route.insert(0,v_type)
                 route.append(v_type)
-                if not checkTimeWindow(route,model,vehicle):
+                if not checkTimeWindow(route,model,vehicle): # 检查时间窗，只有满足时间窗才有可能生成新的标签，否则跳过
                     continue
                 for id,label in enumerate(V[i-1]):
                     if load<=vehicle.capacity and label[k+4]<vehicle.numbers:
@@ -270,7 +272,7 @@ def splitRoutes(node_id_list,model):
                             cost=vehicle.fixed_cost+distance[v_type]*vehicle.variable_cost
                         else:
                             cost=vehicle.fixed_cost+distance[v_type]/vehicle.free_speed*vehicle.variable_cost
-                        W=copy.deepcopy(label)
+                        W=deepcopy(label)
                         W[1]=V[i-1][id][0]
                         W[2]=v_type
                         W[3]=W[3]+cost
@@ -336,75 +338,61 @@ def calTravelCost(route_list,model):
     return timetable_list,time_of_routes,distance_of_routes,obj
 
 def calObj(sol,model):
+    best_sol=Sol()
+    best_sol.obj=float('inf')
+    number_of_split_failures=0
     # calculate travel distance and travel time
     ret = splitRoutes(sol.node_id_list, model)
     if ret is not None:
         sol.route_list = ret
         sol.timetable_list, sol.time_of_routes, sol.distance_of_routes, sol.obj = calTravelCost(sol.route_list, model)
     else:
-        sol.obj = 10**7
+        number_of_split_failures += 1
+        sol.obj = None
 
-def generateInitialSol(model):
-    demand_id_list=copy.deepcopy(model.demand_id_list)
-    best_sol=Sol()
-    best_sol.obj=float('inf')
-    for i in range(model.popsize):
-        seed = int(random.randint(0, 10))
-        random.seed(seed)
-        random.shuffle(demand_id_list)
+def movePosition(model):
+    sol_list=[]
+    local_sol=Sol()
+    local_sol.obj=float('inf')
+    for k in range(model.popsize):
+        nodes_id=[int(random.randint(0,len(model.demand_id_list)-1))]
+        all_nodes_id=deepcopy(model.demand_id_list)
+        all_nodes_id.remove(nodes_id[-1])
+        while len(all_nodes_id)>0:
+            next_node_no=searchNextNode(model,nodes_id[-1],all_nodes_id)
+            nodes_id.append(next_node_no)
+            all_nodes_id.remove(next_node_no)
         sol=Sol()
-        sol.node_id_list= copy.deepcopy(demand_id_list)
+        sol.node_id_list=nodes_id
         calObj(sol,model)
-        model.sol_list.append(sol)
-        model.v.append([model.Vmax]*len(model.demand_id_list))
-        model.pl.append(sol.node_id_list)
-        if sol.obj<best_sol.obj:
-            best_sol=copy.deepcopy(sol)
-    model.best_sol=best_sol
-    model.pg=best_sol.node_id_list
+        sol_list.append(sol)
+        if sol.obj<local_sol.obj:
+            local_sol=deepcopy(sol)
+    model.sol_list=deepcopy(sol_list)
+    if local_sol.obj<model.best_sol.obj:
+        model.best_sol=deepcopy(local_sol)
 
-def updatePosition(model):
-    w=model.w
-    c1=model.c1
-    c2=model.c2
-    pg = model.pg
-    for id,sol in enumerate(model.sol_list):
-        x=sol.node_id_list
-        v=model.v[id]
-        pl=model.pl[id]
-        r1=random.random()
-        r2=random.random()
-        new_v=[]
-        for i in range(len(model.demand_id_list)):
-            v_=w*v[i]+c1*r1*(pl[i]-x[i])+c2*r2*(pg[i]-x[i])
-            if v_>0:
-                new_v.append(min(v_,model.Vmax))
-            else:
-                new_v.append(max(v_,-model.Vmax))
-        new_x=[min(int(x[i]+new_v[i]),len(model.demand_id_list)-1) for i in range(len(model.demand_id_list)) ]
-        new_x=adjustRoutes(new_x,model)
-        model.v[id]=new_v
-        new_sol=Sol()
-        new_sol.node_id_list=new_x
-        calObj(new_sol,model)
-        if new_sol.obj<sol.obj:
-            model.pl[id]=copy.deepcopy(new_x)
-        if new_sol.obj<model.best_sol.obj:
-            model.best_sol=copy.deepcopy(new_sol)
-            model.pg=copy.deepcopy(new_x)
-        model.sol_list[id]= copy.deepcopy(new_sol)
+def searchNextNode(model,current_node_id,SE_List):
+    prob=np.zeros(len(SE_List))
+    for i,node_id in enumerate(SE_List):
+        eta=1/model.distance_matrix[current_node_id,node_id]
+        tau=model.tau[current_node_id,node_id]
+        prob[i]=((eta**model.alpha)*(tau**model.beta))
+    cumsumprob=(prob/sum(prob)).cumsum()
+    cumsumprob -= np.random.rand()
+    next_node_id= SE_List[list(cumsumprob > 0).index(True)]
+    return next_node_id
 
-def adjustRoutes(node_id_list,model):
-    all_node_list=copy.deepcopy(model.demand_id_list)
-    repeat_node=[]
-    for id,node_id in enumerate(node_id_list):
-        if node_id in all_node_list:
-            all_node_list.remove(node_id)
-        else:
-            repeat_node.append(id)
-    for i in range(len(repeat_node)):
-        node_id_list[repeat_node[i]]=all_node_list[i]
-    return node_id_list
+def upateTau(model):
+    rho=model.rho
+    for k in model.tau.keys():
+        model.tau[k]=(1-rho)*model.tau[k]
+    for sol in model.sol_list:
+        nodes_id=sol.node_id_list
+        for i in range(len(nodes_id)-1):
+            from_node_id=nodes_id[i]
+            to_node_id=nodes_id[i+1]
+            model.tau[from_node_id,to_node_id]+=model.Q/sol.obj
 
 def plotObj(obj_list):
     plt.rcParams['font.sans-serif'] = ['SimHei'] #show chinese
@@ -465,42 +453,47 @@ def outPut(model):
         worksheet.write(row+3,4, '-'.join(r))
     work.close()
 
-def run(demand_file,depot_file,epochs,popsize,Vmax,opt_type,w,c1,c2):
+def run(demand_file,depot_file,Q,tau0,alpha,beta,rho,epochs,opt_type,popsize):
     """
     :param demand_file: demand file path
     :param depot_file: depot file path
-    :param epochs: Iteration
-    :param popsize: Population size
-    :param Vmax : Maximum moving speed of particles
+    :param Q: total pheromone
+    :param tau0: Link path initial pheromone
+    :param alpha: Information heuristic factor
+    :param beta: Expected heuristic factor
+    :param rho: Information volatilization factor
+    :param epochs: Iterations
     :param opt_type: Optimization type:0:Minimize the number of vehicles,1:Minimize travel distance
-    :param w: nertia weight
-    :param c1: Learning factor
-    :param c2: Learning factor
+    :param popsize: Population size
     :return:
     """
     model=Model()
-    model.Vmax=Vmax
     model.opt_type=opt_type
-    model.w=w
-    model.c1=c1
-    model.c2=c2
+    model.alpha=alpha
+    model.beta=beta
+    model.Q=Q
+    model.tau0=tau0
+    model.rho=rho
     model.popsize=popsize
+    sol=Sol()
+    sol.obj=float('inf')
+    model.best_sol=sol
+    history_best_obj = []
     readCSVFile(demand_file,depot_file,model)
     calDistanceMatrix(model)
-    history_best_obj=[]
-    generateInitialSol(model)
-    history_best_obj.append(model.best_sol.obj)
     start_time=time.time()
     for ep in range(epochs):
-        updatePosition(model)
+        movePosition(model)
+        upateTau(model)
         history_best_obj.append(model.best_sol.obj)
         print("%s/%s， best obj: %s， runtime: %s" % (ep + 1, epochs, model.best_sol.obj, time.time() - start_time))
     plotObj(history_best_obj)
     plotRoutes(model)
     outPut(model)
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     demand_file = './datasets/MDHVRPTW/demand.csv'
     depot_file = './datasets/MDHVRPTW/depot.csv'
-    run(demand_file=demand_file,depot_file=depot_file,epochs=200,popsize=100,Vmax=2,opt_type=1,w=0.9,c1=1,c2=5)
+    run(demand_file,depot_file,Q=10,tau0=10,alpha=1,beta=5,rho=0.1,epochs=100,opt_type=0,popsize=100)
+
+
