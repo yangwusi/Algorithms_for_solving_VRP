@@ -70,7 +70,6 @@ def genInitialSol(model):
         model.sol_list.append(sol)
         if sol.obj<model.best_sol.obj:
             model.best_sol=copy.deepcopy(sol)
-
 def splitRoutes(nodes_seq,model):
     num_vehicle = 0
     vehicle_routes = []

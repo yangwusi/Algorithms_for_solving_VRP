@@ -120,12 +120,10 @@ def calObj(nodes_seq,model):
         for route in vehicle_routes:
             distance+=calDistance(route,model)
         return distance,vehicle_routes
-
 def createRandomDestory(model):
     d=random.uniform(model.rand_d_min,model.rand_d_max)
     reomve_list=random.sample(range(model.number_of_nodes),int(d*model.number_of_nodes))
     return reomve_list
-
 def createWorseDestory(model,sol):
     deta_f=[]
     for node_no in sol.nodes_seq:
@@ -137,7 +135,6 @@ def createWorseDestory(model,sol):
     d=random.randint(model.worst_d_min,model.worst_d_max)
     remove_list=sorted_id[:d]
     return remove_list
-
 def createRandomRepair(remove_list,model,sol):
     unassigned_nodes_seq=[]
     assigned_nodes_seq = []

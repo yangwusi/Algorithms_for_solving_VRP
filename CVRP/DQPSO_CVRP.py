@@ -93,7 +93,6 @@ def adjustRoutes(nodes_seq,model):
     for i in range(len(repeat_node)):
         nodes_seq[repeat_node[i]]=all_node_list[i]
     return nodes_seq
-
 def updatePosition(model):
     alpha=model.alpha
     pg=model.pg

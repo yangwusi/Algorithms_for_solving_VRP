@@ -93,7 +93,6 @@ def movePosition(model):
     model.sol_list=copy.deepcopy(sol_list)
     if local_sol.obj<model.best_sol.obj:
         model.best_sol=copy.deepcopy(local_sol)
-
 def searchNextNode(model,current_node_no,SE_List):
     prob=np.zeros(len(SE_List))
     for i,node_no in enumerate(SE_List):

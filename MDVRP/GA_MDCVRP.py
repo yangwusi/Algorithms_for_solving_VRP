@@ -73,7 +73,6 @@ def calDistance(model):
             model.distance_matrix[from_node_id, depot.id] = dist
             model.distance_matrix[depot.id, from_node_id] = dist
 
-
 def selectDepot(route,depot_dict,model):
     min_in_out_distance=float('inf')
     index=None
@@ -89,7 +88,6 @@ def selectDepot(route,depot_dict,model):
     route.append(index)
     depot_dict[index].depot_capacity=depot_dict[index].depot_capacity-1
     return route,depot_dict
-
 
 def splitRoutes(node_id_list,model):
     num_vehicle = 0
