@@ -40,7 +40,6 @@ def readXlsxFile(filepath,model):
     df = pd.read_excel(filepath)
     for i in range(df.shape[0]):
         node=Node()
-        node.id=node_seq_no
         node.seq_no=node_seq_no
         node.x_coord= df['x_coord'][i]
         node.y_coord= df['y_coord'][i]
