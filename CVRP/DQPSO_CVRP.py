@@ -73,7 +73,7 @@ def genInitialSol(model):
         sol.obj,sol.routes=calObj(sol.nodes_seq,model)
         model.sol_list.append(sol)
         #init the optimal position of each particle
-        model.pl.append(sol.nodes_seq)
+        model.pl.append(sol)
         #init the average optimal position of particle population
         mg=[mg[k]+node_seq[k]/model.popsize for k in range(model.number_of_nodes)]
         #init the optimal position of particle population
@@ -100,7 +100,7 @@ def updatePosition(model):
     mg_=[0]*model.number_of_nodes  #update optimal position of each particle for next iteration
     for id, sol in enumerate(model.sol_list):
         x=sol.nodes_seq
-        pl = model.pl[id]
+        pl = model.pl[id].nodes_seq
         pi=[]
         for k in range(model.number_of_nodes): #calculate pi(ep+1)
             phi = random.random()
@@ -116,15 +116,17 @@ def updatePosition(model):
         X= adjustRoutes(X, model)
         X_obj, X_routes = calObj(X,model)
         # update pl
-        if X_obj < sol.obj:
-            model.pl[id] = copy.deepcopy(X)
+        if X_obj < model.pl[id].obj:
+            model.pl[id].obj = copy.deepcopy(X_obj)
+            model.pl[id].nodes_seq=X
+            model.pl[id].routes=X_routes
         # update pg,best_sol
         if X_obj < model.best_sol.obj:
             model.best_sol.obj = copy.deepcopy(X_obj)
             model.best_sol.nodes_seq = copy.deepcopy(X)
             model.best_sol.routes = copy.deepcopy(X_routes)
             model.pg = copy.deepcopy(X)
-        mg_ = [mg_[k] + model.pl[id][k] / model.popsize for k in range(model.number_of_nodes)]
+        mg_ = [mg_[k] + model.pl[id].nodes_seq[k] / model.popsize for k in range(model.number_of_nodes)]
         model.sol_list[id].nodes_seq = copy.deepcopy(X)
         model.sol_list[id].obj = copy.deepcopy(X_obj)
         model.sol_list[id].routes = copy.deepcopy(X_routes)

@@ -75,7 +75,7 @@ def genInitialSol(model,popsize):
         sol.obj,sol.routes=calObj(sol.nodes_seq,model)
         model.sol_list.append(sol)
         model.v.append([model.Vmax]*model.number_of_nodes)
-        model.pl.append(sol.nodes_seq)
+        model.pl.append(sol)
         if sol.obj<best_sol.obj:
             best_sol=copy.deepcopy(sol)
     model.best_sol=best_sol
@@ -89,7 +89,7 @@ def updatePosition(model):
     for id,sol in enumerate(model.sol_list):
         x=sol.nodes_seq
         v=model.v[id]
-        pl=model.pl[id]
+        pl=model.pl[id].nodes_seq
         r1=random.random()
         r2=random.random()
         new_v=[]
@@ -104,8 +104,10 @@ def updatePosition(model):
         model.v[id]=new_v
 
         new_x_obj,new_x_routes=calObj(new_x,model)
-        if new_x_obj<sol.obj:
-            model.pl[id]=copy.deepcopy(new_x)
+        if new_x_obj<model.pl[id].obj:
+            model.pl[id].nodes_seq=copy.deepcopy(new_x)
+            model.pl[id].obj=new_x_obj
+            model.pl[id].routes=new_x_routes
         if new_x_obj<model.best_sol.obj:
             model.best_sol.obj=copy.deepcopy(new_x_obj)
             model.best_sol.nodes_seq=copy.deepcopy(new_x)

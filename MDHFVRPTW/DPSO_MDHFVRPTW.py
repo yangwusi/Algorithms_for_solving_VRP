@@ -357,7 +357,7 @@ def generateInitialSol(model):
         calObj(sol,model)
         model.sol_list.append(sol)
         model.v.append([model.Vmax]*len(model.demand_id_list))
-        model.pl.append(sol.node_id_list)
+        model.pl.append(sol)
         if sol.obj<best_sol.obj:
             best_sol=copy.deepcopy(sol)
     model.best_sol=best_sol
@@ -371,7 +371,7 @@ def updatePosition(model):
     for id,sol in enumerate(model.sol_list):
         x=sol.node_id_list
         v=model.v[id]
-        pl=model.pl[id]
+        pl=model.pl[id].node_id_list
         r1=random.random()
         r2=random.random()
         new_v=[]
@@ -387,8 +387,8 @@ def updatePosition(model):
         new_sol=Sol()
         new_sol.node_id_list=new_x
         calObj(new_sol,model)
-        if new_sol.obj<sol.obj:
-            model.pl[id]=copy.deepcopy(new_x)
+        if new_sol.obj<model.pl[id].obj:
+            model.pl[id]=copy.deepcopy(new_sol)
         if new_sol.obj<model.best_sol.obj:
             model.best_sol=copy.deepcopy(new_sol)
             model.pg=copy.deepcopy(new_x)
